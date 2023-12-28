@@ -1,0 +1,9 @@
+server:
+  type: default
+  maxThreads: 1024
+
+swagger:
+  resourcePackage: com.kishan
+  title: Orbit API
+  description: Orbit API
+  version: 1.0
