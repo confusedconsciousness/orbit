@@ -1,2 +1,2 @@
 # orbit
-Search Engine made in Java
+A search Engine made in Java using Dropwizard
