@@ -87,7 +87,7 @@ public class Indexer {
 
     public List<Hit> query(String query) {
         // split the word into terms and check in the index if they are present
-        List<String> terms = Arrays.stream(query.split(" ")).toList();
+        List<String> terms = Arrays.stream(query.toLowerCase().split(" ")).toList();
         List<Hit> hits = new ArrayList<>();
         if (terms.isEmpty()) {
             return hits;
