@@ -4,19 +4,21 @@ import edu.stanford.nlp.ling.CoreAnnotations;
 import edu.stanford.nlp.ling.CoreLabel;
 import edu.stanford.nlp.pipeline.Annotation;
 import edu.stanford.nlp.pipeline.StanfordCoreNLP;
+import edu.stanford.nlp.util.StringUtils;
 import lombok.extern.slf4j.Slf4j;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class Indexer {
 
-    StanfordCoreNLP pipeline;
+    // term -> [dc1, dc2], for e.g (car -> [
+    private final static Map<String, Set<String>> IN_MEMORY_INDEX = new HashMap<>();
+    // dc1 -> document object
+    private final static Map<String, Hit> HIT_MAP = new HashMap<>();
+    private StanfordCoreNLP pipeline;
+
     public Indexer() {
         setup();
     }
@@ -26,56 +28,40 @@ public class Indexer {
         props.setProperty("annotators", "tokenize, ssplit, pos, lemma");
         this.pipeline = new StanfordCoreNLP(props);
     }
+
     public static Set<String> STOP_WORDS = Set.of("a", "an", "and", "are", "as", "at", "be", "but", "by",
             "for", "if", "in", "into", "is", "it",
             "no", "not", "of", "on", "or", "s", "such",
             "t", "that", "the", "their", "then", "there", "these",
             "they", "this", "to", "was", "will", "with");
 
-
-    public void generateInvertedIndex(Document document) {
+    public void index(Document document) {
+        // ENTRY POINT
+        long start = System.currentTimeMillis();
         List<String> tokens = tokenize(document.getBody());
-        log.info(tokens.toString());
+        generateInvertedIndex(document, tokens);
+        long end = System.currentTimeMillis();
+        log.info("Successfully indexed document with id: {} in {}ms", document.getId(), (end - start));
     }
 
-    public static void main(String[] args) throws IOException {
-        // TO TEST THE WORKFLOW
-        Indexer indexer = new Indexer();
-        // the following data will be provided by the crawler
-        String url = "/dummy.txt";
-        InputStream inputStream = Indexer.class.getResourceAsStream(url);
-        Document document = Document.builder()
-                .id(UUID.randomUUID().toString())
-                .url(url)
-                .body(indexer.readFromInputStream(inputStream))
-                .build();
-
-        indexer.generateInvertedIndex(document);
-    }
-
-    /**
-     * Reads input from an InputStream and returns it as a string.
-     *
-     * @param inputStream The InputStream to read from.
-     * @return The contents of the InputStream as a string.
-     * @throws IOException If an I/O error occurs while reading the InputStream.
-     */
-    private String readFromInputStream(InputStream inputStream) throws IOException {
-        StringBuilder resultStringBuilder = new StringBuilder();
-
-        try (BufferedReader br = new BufferedReader(new InputStreamReader(inputStream))) {
-            String line;
-
-            while ((line = br.readLine()) != null) {
-                resultStringBuilder.append(line).append("\n");
+    public void generateInvertedIndex(Document document, List<String> tokens) {
+        final String documentId = document.getId();
+        tokens.forEach(token -> {
+            if (!IN_MEMORY_INDEX.containsKey(token)) {
+                IN_MEMORY_INDEX.put(token, new HashSet<>());
             }
-        }
-        return resultStringBuilder.toString();
+            IN_MEMORY_INDEX.get(token).add(documentId);
+        });
+        HIT_MAP.put(documentId, Hit.builder()
+                .id(documentId)
+                .title(document.getTitle())
+                .url(document.getUrl())
+                .build());
     }
-
 
     private List<String> tokenize(String corpus) {
-        Annotation annotation = new Annotation(corpus);
+        // convert the corpus to lowercase
+        Annotation annotation = new Annotation(corpus.toLowerCase());
         pipeline.annotate(annotation);
 
         // Extract tokens and lemmata from the annotation
@@ -91,12 +77,30 @@ public class Indexer {
         }
 
         // remove the stop words from the tokenized words
-        return tokenized.stream().filter(token -> !STOP_WORDS.contains(token)).collect(Collectors.toList());
+        return tokenized.stream().filter(token -> !invalidToken(token)).collect(Collectors.toList());
     }
 
-    private void preprocess(String corpus) {
-        List<String> tokenized = tokenize(corpus);
+    private boolean invalidToken(String token) {
+        // if the token is a stop word or a punctuation / numbers or special characters don't consider this as a valid token
+        return STOP_WORDS.contains(token) || StringUtils.matches(token, "[\\p{Punct}\\d]+");
     }
 
+    public List<Hit> query(String query) {
+        // split the word into terms and check in the index if they are present
+        List<String> terms = Arrays.stream(query.split(" ")).toList();
+        List<Hit> hits = new ArrayList<>();
+        if (terms.isEmpty()) {
+            return hits;
+        }
+
+        terms.forEach(term -> {
+            if (IN_MEMORY_INDEX.containsKey(term)) {
+                Set<String> documentIds = IN_MEMORY_INDEX.get(term);
+                hits.addAll(documentIds.stream().map(HIT_MAP::get).toList());
+            }
+        });
+
+        return hits;
+    }
 
 }

@@ -16,7 +16,10 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <dropwizard.version>4.0.0</dropwizard.version>
+        <dropwizard.version>4.0.4</dropwizard.version>
+        <nlp.version>4.5.5</nlp.version>
+        <jsoup.version>1.15.3</jsoup.version>
+        <htmlunit.version>2.51.0</htmlunit.version>
         <mainClass>com.kishan.App</mainClass>
     </properties>
 
@@ -33,17 +36,21 @@
     </dependencyManagement>
 
     <dependencies>
-        <!-- https://mvnrepository.com/artifact/in.vectorpro/dropwizard-swagger-ui -->
         <dependency>
-            <groupId>in.vectorpro.dropwizard</groupId>
+            <groupId>net.sourceforge.htmlunit</groupId>
+            <artifactId>htmlunit</artifactId>
+            <version>${htmlunit.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>${jsoup.version}</version>
+        </dependency>
+
+        <dependency>
+            <groupId>com.smoketurner</groupId>
             <artifactId>dropwizard-swagger</artifactId>
-            <version>2.0.28-1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>io.dropwizard</groupId>
-                    <artifactId>dropwizard-core</artifactId>
-                </exclusion>
-            </exclusions>
+            <version>4.0.0-1</version>
         </dependency>
         <dependency>
             <groupId>ru.vyarus</groupId>
@@ -54,12 +61,12 @@
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
-            <version>4.4.0</version>
+            <version>${nlp.version}</version>
         </dependency>
         <dependency>
             <groupId>edu.stanford.nlp</groupId>
             <artifactId>stanford-corenlp</artifactId>
-            <version>4.4.0</version>
+            <version>${nlp.version}</version>
             <classifier>models</classifier>
         </dependency>
 
@@ -67,12 +74,13 @@
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
-            <version>1.18.30</version>
+            <version>1.18.24</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>io.dropwizard</groupId>
             <artifactId>dropwizard-core</artifactId>
+            <version>${dropwizard.version}</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -137,7 +145,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
-                <orbitConfiguration>
+                <configuration>
                     <createDependencyReducedPom>true</createDependencyReducedPom>
                     <transformers>
                         <transformer
@@ -158,7 +166,7 @@
                             </excludes>
                         </filter>
                     </filters>
-                </orbitConfiguration>
+                </configuration>
                 <executions>
                     <execution>
                         <phase>package</phase>
@@ -171,26 +179,22 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
-                <orbitConfiguration>
+                <configuration>
                     <archive>
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <mainClass>${mainClass}</mainClass>
                         </manifest>
                     </archive>
-                </orbitConfiguration>
+                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>9</source>
-                    <target>9</target>
+                    <source>17</source>
+                    <target>17</target>
                 </configuration>
-                <orbitConfiguration>
-                    <source>11</source>
-                    <target>11</target>
-                </orbitConfiguration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -223,22 +227,6 @@
         </plugins>
     </build>
 
-    <reporting>
-        <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-project-info-reports-plugin</artifactId>
-                <orbitConfiguration>
-                    <dependencyLocationsEnabled>false</dependencyLocationsEnabled>
-                    <dependencyDetailsEnabled>false</dependencyDetailsEnabled>
-                </orbitConfiguration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-javadoc-plugin</artifactId>
-            </plugin>
-        </plugins>
-    </reporting>
     <profiles>
         <profile>
             <id>java11+</id>

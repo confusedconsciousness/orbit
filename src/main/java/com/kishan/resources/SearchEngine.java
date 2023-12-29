@@ -1,6 +1,8 @@
 package com.kishan.resources;
 
-import com.kishan.core.Crawler;
+
+import com.kishan.core.Hit;
+import com.kishan.core.Indexer;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.*;
@@ -9,28 +11,31 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-@Path("/webmaster")
-@Tag(name = "Webmaster APIs", description = "Use these APIs to crawl a website and make it indexable")
+import java.util.List;
+
+@Path("/search")
+@Tag(name = "Search APIs", description = "Use these APIs to search the web")
 @Produces("application/json")
 @Consumes("application/json")
 @AllArgsConstructor(onConstructor = @__(@Inject))
 @Slf4j
-public class OrbitWebmaster {
-    private Crawler crawler;
+public class SearchEngine {
+
+    private final Indexer indexer;
 
     @POST
-    @Path("/crawl")
-    public Response crawl(@NonNull @QueryParam("url") final String url,
-                          @DefaultValue("false") @QueryParam("crawlChildren") final boolean crawlChildren) throws Exception {
+    @Path("/")
+    public Response search(@NonNull @QueryParam("query") final String query) throws Exception {
         try {
             long start = System.currentTimeMillis();
-            crawler.crawl(url, crawlChildren, 0L);
+            List<Hit> hits = indexer.query(query);
             long end = System.currentTimeMillis();
-            log.info("Successfully crawled the website in :{}ms", (end - start));
-            return Response.ok(202).build();
+            log.info("Successfully search the entire web for your query and it took only :{}ms", (end - start));
+            return Response.ok(hits).build();
         } catch (Exception e) {
             log.error("Unable to crawl: ", e);
             throw e;
         }
+
     }
 }

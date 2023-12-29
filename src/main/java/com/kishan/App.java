@@ -4,11 +4,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Module;
 import com.google.inject.Stage;
 import com.kishan.module.GuiceModule;
-import in.vectorpro.dropwizard.swagger.SwaggerBundle;
-import in.vectorpro.dropwizard.swagger.SwaggerBundleConfiguration;
 import io.dropwizard.core.Application;
 import io.dropwizard.core.setup.Bootstrap;
 import io.dropwizard.core.setup.Environment;
+import io.federecio.dropwizard.swagger.SwaggerBundle;
+import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
 import ru.vyarus.dropwizard.guice.GuiceBundle;
 
 public class App extends Application<OrbitConfiguration> {
@@ -25,6 +25,12 @@ public class App extends Application<OrbitConfiguration> {
     @Override
     public void initialize(final Bootstrap<OrbitConfiguration> bootstrap) {
         bootstrap.addBundle(guiceBundle(createGuiceModule(new ObjectMapper())));
+        bootstrap.addBundle(new SwaggerBundle<>() {
+            @Override
+            protected SwaggerBundleConfiguration getSwaggerBundleConfiguration(OrbitConfiguration configuration) {
+                return configuration.getSwaggerBundleConfiguration();
+            }
+        });
 
     }
 
@@ -42,9 +48,5 @@ public class App extends Application<OrbitConfiguration> {
         return GuiceBundle.builder()
                 .enableAutoConfig(getClass().getPackage().getName())
                 .modules(modules).build(Stage.DEVELOPMENT);
-    }
-
-    private void addSwaggerBundle(Bootstrap<OrbitConfiguration> bootstrap) {
-        bootstrap.addBundle(new SwaggerBundle<OrbitConfiguration>());
     }
 }
