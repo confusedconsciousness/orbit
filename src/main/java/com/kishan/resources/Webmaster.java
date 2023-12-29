@@ -9,13 +9,13 @@ import lombok.AllArgsConstructor;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
-@Path("/webmaster")
+@Path("/")
 @Tag(name = "Webmaster APIs", description = "Use these APIs to crawl a website and make it indexable")
 @Produces("application/json")
 @Consumes("application/json")
 @AllArgsConstructor(onConstructor = @__(@Inject))
 @Slf4j
-public class OrbitWebmaster {
+public class Webmaster {
     private Crawler crawler;
 
     @POST
